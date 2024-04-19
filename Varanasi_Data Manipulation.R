@@ -180,32 +180,49 @@ data_filtered$Depression <- as.factor(data_filtered$Depression)
 data_filtered$Depression <- factor(data_filtered$Depression, levels = c("0", "1"), labels = c("No", "Yes"))
 
 
-##condom use
-names(data_filtered)[names(data_filtered) == "sv13"] <- "condom_use"
-data_filtered$condom_use <- as.factor(data_filtered$condom_use)
-data_filtered$condom_use <- fct_collapse(data_filtered$condom_use,
-                                           No = c("1"),
-                                           Yes = c("2", "3", "4", "5"),
-                                           Other = c("996", "997")
-)
 
 
-#Variable: EVER TESTED FOR HIV/HCV
-##Ever tested for HIV (hiv1)
+##SERVICES VARIABLES
+
+#Variable: EVER TESTED FOR HIV (hiv1)
 names(data_filtered)[names(data_filtered) == "hiv1"] <- "Ever tested for HIV"
 data_filtered$`Ever tested for HIV` <- as.factor(data_filtered$`Ever tested for HIV`)
 data_filtered$`Ever tested for HIV` <- factor(data_filtered$`Ever tested for HIV`, levels = c("0", "1"), labels = c("No", "Yes"))
 
-##Ever tested for HCV (hcv1)
+
+#Variable: Ever tested for HCV (hcv1)
 names(data_filtered)[names(data_filtered) == "hcv1"] <- "Ever tested for HCV"
 data_filtered$`Ever tested for HCV` <- as.factor(data_filtered$`Ever tested for HCV`)
 data_filtered$`Ever tested for HCV` <- factor(data_filtered$`Ever tested for HCV`, levels = c("0", "1", "997"), labels = c("No", "Yes", "Don't know"))
 
 
+#Variable: NEEDLE EXCHANGE PROGRAM (sv1)
+data_filtered$`Ever participated in a needle exchange program` = ifelse(data_filtered$sv1 == 0, "No", "Yes")
 
 
-#Table 1 with hiv
-table1(~ Age + `Marital status` + Education + Employment + `Housing status` + `First non-medical drug injection age` + `Years injecting non-medical drugs` + `History of needle sharing` + `Alcohol use` + `History of incarceration` + `Sex work involvement` + `Lifetime sexual partners` + Depression | `HIV status`, data = data_filtered)
+#Variable: OPIATE SUBSTITUTION PROGRAM (sv7)
+data_filtered$`Ever participated in an OST program` = ifelse(data_filtered$sv7 == 0, "No", "Yes")
+
+
+#Variable: REASON FOR NOT ATTENDING AN OST PROGRAM (sv8a1)
+names(data_filtered)[names(data_filtered) == "sv8a1"] <- "Reason for not attending an OST program"
+data_filtered$`Reason for not attending an OST program` <- as.factor(data_filtered$`Reason for not attending an OST program`)
+data_filtered$`Reason for not attending an OST program` <- factor(data_filtered$`Reason for not attending an OST program`, levels = c("1", "2", "3", "5"), labels = c("I inject very infrequently", "I do not need OST", "I do not know where to find an OST program", "I do not have time to go"))
+  
+
+
+table1(~ Age + `Marital status` + Education + Employment + `Housing status` + `First non-medical drug injection age` + `Years injecting non-medical drugs` + `History of needle sharing` + `Alcohol use` + `History of incarceration` + `Sex work involvement` + `Lifetime sexual partners` + Depression + `Ever tested for HIV` + `Ever tested for HCV` + `Ever participated in a needle exchange program` + `Ever participated in an OST program` + `Reason for not attending an OST program` | `HIV status`, data = data_filtered)
+
+table1(~ Age + `Marital status` + Education + Employment + `Housing status` + 
+         `First non-medical drug injection age` + `Years injecting non-medical drugs` + 
+         `History of needle sharing` + `Alcohol use` + `History of incarceration` + 
+         `Sex work involvement` + `Lifetime sexual partners` + Depression + 
+         `Ever tested for HIV` + `Ever tested for HCV` + 
+         `Ever participated in a needle exchange program` + 
+         `Ever participated in an OST program` + `Reason for not attending an OST program` |
+         `HIV status` + `HCV status`, 
+       data = data_filtered)
+
 
 
 #Creating new enroll month variable
