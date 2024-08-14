@@ -58,11 +58,14 @@ data_filtered$`HCV status` <- factor(data_filtered$`HCV status`, levels = c("0",
 ##DEMOGRAPHIC VARIABLES
 
 #Variable: AGE - grouping in age ranges
-names(data_filtered)[names(data_filtered) == "cm_age"] <- "AgeGroup"
-data_filtered$AgeGroup <- cut(data_filtered$AgeGroup,
+names(data_filtered)[names(data_filtered) == "cm_age"] <- "Age"
+data_filtered$Age <- as.numeric(as.character(data_filtered$Age))
+data_filtered$Age <- cut(data_filtered$Age,
                               breaks = c(-Inf, 24, 34, 44, 54, Inf),
                               labels = c("18-24", "25-34", "35-44", "45-54", "55+"),
                               right = FALSE)
+data_filtered$Age <- as.factor(data_filtered$Age)
+
 
 #Variable: MARITAL STATUS
 names(data_filtered)[names(data_filtered) == "dg5"] <- "Marital status"
@@ -132,16 +135,17 @@ data_filtered$`Alcohol use` <- factor(data_filtered$`Alcohol use`, levels = c("0
 
 
 
-
 ##PSYCHOSOCIAL RISKS VARIABLES
 
 #Variable: HISTORY OF INCARCERATION
 names(data_filtered)[names(data_filtered) == "screen10"] <- "History of incarceration"
+data_filtered$`History of incarceration` <- as.factor(data_filtered$`History of incarceration`)
 data_filtered$`History of incarceration` <- factor(data_filtered$`History of incarceration`, levels = c("0", "1"), labels = c("No", "Yes"))
 
 
 #Variable: SEX WORK INVOLVEMENT (Sex work involvement)
 names(data_filtered)[names(data_filtered) == "su58"] <- "Sex work involvement"
+data_filtered$`Sex work involvement`<- as.factor(data_filtered$`Sex work involvement`)
 data_filtered$`Sex work involvement` <- factor(data_filtered$`Sex work involvement`, levels = c("0", "1", "997"), labels = c("No", "Yes", "Don't know"))
 
 
@@ -190,12 +194,8 @@ data_filtered$Depression <- factor(data_filtered$Depression, levels = c("0", "1"
 
 #Variable: EVER TESTED FOR HIV (hiv1)
 names(data_filtered)[names(data_filtered) == "hiv1"] <- "Ever tested for HIV"
+data_filtered$`Ever tested for HIV` <- as.factor(data_filtered$`Ever tested for HIV`)
 data_filtered$`Ever tested for HIV` <- factor(data_filtered$`Ever tested for HIV`, levels = c("0", "1"), labels = c("No", "Yes"))
-
-
-levels(data_filtered$`Ever tested for HIV`)
-table(data_filtered$`Ever tested for HIV`, useNA = "ifany")
-head(tbl1data)
 
 
 #Variable: Ever tested for HCV (hcv1)
@@ -206,13 +206,80 @@ data_filtered$`Ever tested for HCV` <- factor(data_filtered$`Ever tested for HCV
 
 #Variable: NEEDLE EXCHANGE PROGRAM (sv1)
 data_filtered$`Ever participated in a needle exchange program` = ifelse(data_filtered$sv1 == 0, "No", "Yes")
+data_filtered$`Ever participated in a needle exchange program` <- as.factor(data_filtered$`Ever participated in a needle exchange program`)
 
 
 #Variable: OPIATE SUBSTITUTION PROGRAM (sv7)
 data_filtered$`Ever participated in an OST program` = ifelse(data_filtered$sv7 == 0, "No", "Yes")
+data_filtered$`Ever participated in an OST program` <- as.factor(data_filtered$`Ever participated in an OST program`)
 
 
 #Variable: REASON FOR NOT ATTENDING AN OST PROGRAM (sv8a1)
 names(data_filtered)[names(data_filtered) == "sv8a1"] <- "Reason for not attending an OST program"
 data_filtered$`Reason for not attending an OST program` <- as.factor(data_filtered$`Reason for not attending an OST program`)
 data_filtered$`Reason for not attending an OST program` <- factor(data_filtered$`Reason for not attending an OST program`, levels = c("1", "2", "3", "5"), labels = c("I inject very infrequently", "I do not need OST", "I do not know where to find an OST program", "I do not have time to go"))
+
+
+
+##TIME VARIABLES BY ENROLL MONTH
+
+#Convert date variable
+data_filtered <- data_filtered %>%
+  mutate(enrolldt = lubridate::dmy(enrolldt))
+#Check the class of the enrolldt variable after conversion
+class(data_filtered$enrolldt)
+#Creating a new enroll month variable
+data_filtered$enrollmonth <- format(data_filtered$enrolldt, "%Y-%m")
+data_filtered <- data_filtered %>% 
+  mutate(enrollmonth = case_when(
+    enrollmonth == "2017-12" ~ "Dec 2017",
+    enrollmonth == "2018-01" ~ "Jan 2018",
+    enrollmonth == "2018-02" ~ "Feb 2018",
+    enrollmonth == "2018-03" ~ "Mar 2018",
+    enrollmonth == "2018-04" ~ "Apr 2018",
+    enrollmonth == "2018-05" ~ "May 2018",
+    enrollmonth == "2018-06" ~ "Jun 2018",
+    enrollmonth == "2018-07" ~ "Jul 2018",
+    enrollmonth == "2018-08" ~ "Aug 2018",
+    enrollmonth == "2018-09" ~ "Sep 2018",
+    enrollmonth == "2018-10" ~ "Oct 2018",
+    enrollmonth == "2018-11" ~ "Nov 2018",
+    enrollmonth == "2018-12" ~ "Dec 2018",
+  ))
+#Make month factor variable
+month_levels <- c("Dec 2017", "Jan 2018", "Feb 2018", "Mar 2018", "Apr 2018", "May 2018", "Jun 2018", "Jul 2018", "Aug 2018", "Sep 2018", "Oct 2018", "Nov 2018", "Dec 2018")  # Define the desired order
+
+data_filtered$enrollmonth<- factor(data_filtered$enrollmonth, levels = month_levels)
+#Make quarter variable
+data_filtered <- data_filtered %>%
+  mutate(
+    enrollmonth = factor(enrollmonth, levels = month_levels),
+    enrollquarter = case_when(
+      enrollmonth %in% factor(month_levels[1:4]) ~ "Quarter 1",  # Dec 2017, Jan 2018, Feb 2018, Mar 2018
+      enrollmonth %in% factor(month_levels[5:7]) ~ "Quarter 2",  # Apr 2018, May 2018, Jun 2018
+      enrollmonth %in% factor(month_levels[8:10]) ~ "Quarter 3", # Jul 2018, Aug 2018, Sep 2018
+      enrollmonth %in% factor(month_levels[c(11:13)]) ~ "Quarter 4"  # Oct 2018, Nov 2018 Dec 2018 (for the last quarter)
+    )
+  )
+
+
+
+##VIRAL LOAD VARIABLES
+
+#Variable1: Coinfection
+data_filtered$coinfection_status <- with(data_filtered, 
+                                         ifelse(!is.na(hivviralload) & hivviralload != "" & !is.na(hcvviralload) & hcvviralload != "", 
+                                                "Coinfected", 
+                                                ifelse(!is.na(hivviralload) & hivviralload != "", 
+                                                       "HIV positive only", 
+                                                       ifelse(!is.na(hcvviralload) & hcvviralload != "", 
+                                                              "HCV positive only", 
+                                                              "Not infected"))))
+
+#Variable2:HIVHCVCoinfection
+data_filtered$HIVHCVCoinfection <- ifelse(
+  !is.na(data_filtered$hivpvl_rawlab) & !is.na(data_filtered$hcvpvl_rawlab), 
+  "Y", 
+  "N"
+)
+
